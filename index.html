@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Possession Sonata</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Creepster&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,131 +13,234 @@
         }
         
         body {
-            background-color: #1a1a1a;
-            color: white;
-            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a0d1a 25%, #2d1b2d 50%, #1a0d1a 75%, #0a0a0a 100%);
+            background-size: 400% 400%;
+            animation: ghostlyAura 8s ease-in-out infinite;
+            color: #e6d3c7;
+            font-family: 'Cinzel', serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(139, 69, 19, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(75, 0, 130, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(0, 0, 0, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        @keyframes ghostlyAura {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
         
         .app-container {
-            border: 3px solid #666;
-            padding: 20px;
-            max-width: 400px;
+            border: 3px solid #8b4513;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 450px;
             width: 100%;
-            background-color: #2a2a2a;
+            background: linear-gradient(145deg, rgba(20, 20, 20, 0.9), rgba(40, 20, 40, 0.8));
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 0 30px rgba(139, 69, 19, 0.3),
+                inset 0 0 20px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+        
+        .app-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #8b4513, #654321, #8b4513);
+            border-radius: 15px;
+            z-index: -1;
+            animation: borderGlow 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes borderGlow {
+            0% { box-shadow: 0 0 20px rgba(139, 69, 19, 0.3); }
+            100% { box-shadow: 0 0 40px rgba(139, 69, 19, 0.6); }
         }
         
         .title {
             text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            letter-spacing: 1px;
+            font-size: 24px;
+            font-weight: 700;
+            font-family: 'Creepster', cursive;
+            margin-bottom: 25px;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            color: #d4af37;
+            animation: titleFlicker 4s ease-in-out infinite;
+        }
+        
+        @keyframes titleFlicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
         }
         
         .instruments-section {
-            border: 2px solid #666;
-            padding: 20px;
-            margin-bottom: 20px;
+            border: 2px solid #654321;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            background: rgba(0, 0, 0, 0.3);
         }
         
         .section-title {
-            font-size: 14px;
-            margin-bottom: 15px;
-            color: #ccc;
+            font-size: 16px;
+            margin-bottom: 20px;
+            color: #d4af37;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            font-weight: 600;
         }
         
         .instruments-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 20px;
         }
         
         .instrument-btn {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            border: 2px solid #333;
-            color: black;
-            font-weight: bold;
-            font-size: 14px;
+            width: 130px;
+            height: 130px;
+            border-radius: 15px;
+            border: 3px solid #8b4513;
+            background: linear-gradient(145deg, rgba(40, 40, 40, 0.9), rgba(20, 20, 20, 0.9));
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s ease;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            position: relative;
+            overflow: hidden;
         }
         
         .instrument-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+            transform: scale(1.08);
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.5);
+            border-color: #d4af37;
         }
         
         .instrument-btn:active {
-            transform: scale(0.95);
+            transform: scale(0.98);
         }
         
-        .violin { background-color: #00ff00; }
-        .drums { background-color: #0000ff; color: white; }
-        .clarinet { background-color: #8000ff; color: white; }
-        .flute { background-color: #ff00ff; }
-        .saxophone { background-color: #ffff00; }
-        .trumpet { background-color: #ff8000; }
+        .instrument-icon {
+            font-size: 60px;
+            margin-bottom: 8px;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
+        }
+        
+        .instrument-name {
+            font-size: 12px;
+            color: #e6d3c7;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
         
         .power-section {
-            border: 2px solid #666;
-            padding: 15px;
+            border: 2px solid #654321;
+            border-radius: 10px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
         }
         
         .power-controls {
             display: flex;
-            gap: 10px;
+            gap: 15px;
             justify-content: center;
         }
         
         .power-btn {
-            width: 50px;
-            height: 50px;
-            border: 2px solid #666;
-            background-color: #ff6666;
-            color: white;
+            width: 60px;
+            height: 60px;
+            border: 2px solid #8b4513;
+            border-radius: 10px;
+            background: linear-gradient(145deg, rgba(60, 20, 20, 0.9), rgba(40, 10, 10, 0.9));
+            color: #e6d3c7;
             font-weight: bold;
+            font-size: 18px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            font-family: 'Cinzel', serif;
         }
         
         .power-btn:hover {
-            background-color: #ff4444;
+            background: linear-gradient(145deg, rgba(80, 30, 30, 0.9), rgba(60, 20, 20, 0.9));
+            box-shadow: 0 0 15px rgba(139, 69, 19, 0.4);
         }
         
         .power-btn.active {
-            background-color: #cc0000;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-        }
-        
-        .power-btn:nth-child(2) {
-            background-color: #dd4444;
-        }
-        
-        .power-btn:nth-child(3) {
-            background-color: #aa0000;
+            background: linear-gradient(145deg, rgba(139, 69, 19, 0.9), rgba(101, 67, 33, 0.9));
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 175, 55, 0.6);
+            border-color: #d4af37;
+            color: #d4af37;
         }
         
         .status {
             text-align: center;
-            margin-top: 15px;
+            margin-top: 20px;
             font-size: 14px;
-            color: #ccc;
-            height: 20px;
+            color: #b8860b;
+            height: 25px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
         }
         
         .playing {
-            color: #00ff00;
+            color: #90EE90;
             font-weight: bold;
+            animation: pulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Floating particles effect */
+        .particle {
+            position: absolute;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { 
+                transform: translateY(0px) rotate(0deg);
+                opacity: 0;
+            }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            50% { 
+                transform: translateY(-20px) rotate(180deg);
+                opacity: 0.1;
+            }
         }
     </style>
 </head>
@@ -145,36 +249,55 @@
         <div class="title">THE POSSESSION SONATA</div>
         
         <div class="instruments-section">
-            <div class="section-title">instruments</div>
+            <div class="section-title">Cursed Instruments</div>
             <div class="instruments-grid">
-                <button class="instrument-btn violin" data-instrument="violin">VIOLIN</button>
-                <button class="instrument-btn drums" data-instrument="drums">DRUMS</button>
-                <button class="instrument-btn clarinet" data-instrument="clarinet">CLARINETTE</button>
-                <button class="instrument-btn flute" data-instrument="flute">FLUTE</button>
-                <button class="instrument-btn saxophone" data-instrument="saxophone">SAXOPHONE</button>
-                <button class="instrument-btn trumpet" data-instrument="trumpet">TRUMPET</button>
+                <button class="instrument-btn" data-instrument="violin">
+                    <div class="instrument-icon">🎻</div>
+                    <div class="instrument-name">Violin</div>
+                </button>
+                <button class="instrument-btn" data-instrument="drums">
+                    <div class="instrument-icon">🥁</div>
+                    <div class="instrument-name">Drums</div>
+                </button>
+                <button class="instrument-btn" data-instrument="clarinet">
+                    <div class="instrument-icon">🎺</div>
+                    <div class="instrument-name">Clarinet</div>
+                </button>
+                <button class="instrument-btn" data-instrument="flute">
+                    <div class="instrument-icon">🪈</div>
+                    <div class="instrument-name">Flute</div>
+                </button>
+                <button class="instrument-btn" data-instrument="saxophone">
+                    <div class="instrument-icon">🎷</div>
+                    <div class="instrument-name">Saxophone</div>
+                </button>
+                <button class="instrument-btn" data-instrument="trumpet">
+                    <div class="instrument-icon">📯</div>
+                    <div class="instrument-name">Trumpet</div>
+                </button>
             </div>
         </div>
         
         <div class="power-section">
-            <div class="section-title">Power level</div>
+            <div class="section-title">Spectral Power</div>
             <div class="power-controls">
-                <button class="power-btn active" data-level="1">1</button>
-                <button class="power-btn" data-level="2">2</button>
                 <button class="power-btn" data-level="3">3</button>
+                <button class="power-btn" data-level="2">2</button>
+                <button class="power-btn active" data-level="1">1</button>
             </div>
         </div>
         
-        <div class="status" id="status">Ready - Volume Level: 1 (Low)</div>
+        <div class="status" id="status">Spectrometer Active - Detection Level: 1</div>
     </div>
 
     <script>
         class PossessionSonata {
             constructor() {
-                this.currentVolume = 1;
+                this.currentDetectionLevel = 1;
                 this.audioContext = null;
                 this.audioFiles = {};
                 this.init();
+                this.createFloatingParticles();
             }
             
             init() {
@@ -192,50 +315,40 @@
             }
             
             loadAudioFiles() {
-                // Load all instrument MP3 files from multiple possible locations
                 const instruments = ['SAXOPHONE', 'VIOLIN', 'TRUMPET', 'DRUMS', 'FLUTE', 'CLARINETTE'];
                 
                 instruments.forEach(instrument => {
                     this.audioFiles[instrument.toLowerCase()] = new Audio();
                     
-                    // Multiple location paths for each instrument
                     const possiblePaths = [
-                        `./sounds/${instrument}.mp3`, // Local sounds folder
-                        `C:\\Users\\Lili\\Downloads\\${instrument}.mp3`, // Windows user downloads
-                        
-                        
-                        `/storage/emulated/0/Download/${instrument}.mp3`, // Android downloads
-                        `file:///android_asset/sounds/${instrument}.mp3`, // Android assets
-                        `./assets/${instrument}.mp3`, // Web assets folder
-                        `./${instrument}.mp3`, // Same directory
-                        `../Downloads/${instrument}.mp3`, // Parent Downloads
-                        `/home/user/Downloads/${instrument}.mp3`, // Linux downloads
-                        `/Users/user/Downloads/${instrument}.mp3` // macOS downloads
+                        `./sounds/${instrument}.mp3`,
+                        `C:\\Users\\Lili\\Downloads\\${instrument}.mp3`,
+                        `/storage/emulated/0/Download/${instrument}.mp3`,
+                        `file:///android_asset/sounds/${instrument}.mp3`,
+                        `./assets/${instrument}.mp3`,
+                        `./${instrument}.mp3`,
+                        `../Downloads/${instrument}.mp3`,
+                        `/home/user/Downloads/${instrument}.mp3`,
+                        `/Users/user/Downloads/${instrument}.mp3`
                     ];
                     
-                    // Try first path
                     this.audioFiles[instrument.toLowerCase()].src = possiblePaths[0];
                     this.audioFiles[instrument.toLowerCase()].preload = 'auto';
-                    
-                    // Set fixed volume to medium-high (0.75)
                     this.audioFiles[instrument.toLowerCase()].volume = 0.75;
                     
                     this.audioFiles[instrument.toLowerCase()].onerror = () => {
                         console.log(`Could not load ${instrument}.mp3 from any location - using synthesized sound instead`);
-                        // Try next path if available (simplified for demo)
                     };
                 });
             }
             
             setupEventListeners() {
-                // Power level buttons
                 document.querySelectorAll('.power-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
-                        this.setPowerLevel(parseInt(e.target.dataset.level));
+                        this.setDetectionLevel(parseInt(e.target.dataset.level));
                     });
                 });
                 
-                // Instrument buttons
                 document.querySelectorAll('.instrument-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         this.playInstrument(e.target.dataset.instrument);
@@ -243,147 +356,244 @@
                 });
             }
             
-            setPowerLevel(level) {
-                this.currentVolume = level;
+            setDetectionLevel(level) {
+                this.currentDetectionLevel = level;
                 
-                // Play radar detection sound when power level is pressed
-                this.playRadarSound();
+                this.playSpectrometerSound(level);
                 
-                // Update UI
                 document.querySelectorAll('.power-btn').forEach(btn => {
                     btn.classList.remove('active');
                 });
                 document.querySelector(`[data-level="${level}"]`).classList.add('active');
                 
-                // Update status
-                const volumeText = level === 1 ? 'Low' : level === 2 ? 'Medium' : 'High';
-                document.getElementById('status').textContent = `Power Level Set: ${level} (${volumeText}) - Radar Active`;
+                const detectionText = level === 3 ? 'Far Distance' : level === 2 ? 'Medium Range' : 'Close Proximity';
+                const intensity = level === 3 ? 'Faint' : level === 2 ? 'Moderate' : 'Strong';
+                document.getElementById('status').textContent = `Spectral Detection: ${detectionText} - ${intensity} Signal`;
                 
-                // Reset status after radar sound
                 setTimeout(() => {
-                    document.getElementById('status').textContent = `Ready - Power Level: ${level} (${volumeText})`;
-                }, 1500);
+                    document.getElementById('status').textContent = `Spectrometer Active - Detection Level: ${level}`;
+                }, 2500);
             }
             
             playInstrument(instrument) {
-                const volumeText = this.currentVolume === 1 ? 'Low' : this.currentVolume === 2 ? 'Medium' : 'High';
                 const status = document.getElementById('status');
                 
-                status.textContent = `Playing ${instrument.toUpperCase()} - Fixed Medium-High Volume`;
+                status.textContent = `Summoning ${instrument.toUpperCase()} Spirit - Manifestation Active`;
                 status.classList.add('playing');
                 
-                // Play sound based on instrument (now all instruments can use MP3 files)
+                // Ensure AudioContext is ready
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    this.audioContext.resume().then(() => {
+                        this.executeInstrumentSound(instrument);
+                    });
+                } else {
+                    this.executeInstrumentSound(instrument);
+                }
+                
+                setTimeout(() => {
+                    status.textContent = `Spectrometer Active - Detection Level: ${this.currentDetectionLevel}`;
+                    status.classList.remove('playing');
+                }, 2500);
+            }
+            
+            executeInstrumentSound(instrument) {
                 const instrumentKey = instrument === 'clarinet' ? 'clarinette' : instrument;
                 if (this.audioFiles[instrumentKey] && !this.audioFiles[instrumentKey].error) {
                     this.playAudioFile(this.audioFiles[instrumentKey]);
                 } else {
-                    this.generateSound(instrument, 2); // Fixed at medium level for fallback
+                    this.generateInstrumentSound(instrument);
                 }
-                
-                // Reset status after 2 seconds
-                setTimeout(() => {
-                    status.textContent = `Ready - Power Level: ${this.currentVolume} (${volumeText})`;
-                    status.classList.remove('playing');
-                }, 2000);
             }
             
             playAudioFile(audioElement) {
-                // Stop any currently playing instance
+                // Stop any currently playing audio
                 audioElement.pause();
                 audioElement.currentTime = 0;
+                audioElement.playbackRate = 1.0; // Always normal speed for instruments
                 
-                // Volume is already set to medium-high (0.75) during loading
+                // Ensure audio is ready to play
+                const playPromise = audioElement.play();
                 
-                // Play the audio
-                audioElement.play().catch(e => {
-                    console.log('Error playing audio file:', e);
-                    // Fallback to synthesized sound at medium level
-                    this.generateSound('saxophone', 2);
-                });
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        console.log('Audio playing successfully');
+                    }).catch(e => {
+                        console.log('Error playing audio file:', e);
+                        this.generateInstrumentSound('fallback');
+                    });
+                }
             }
             
-            playRadarSound() {
+            playSpectrometerSound(level) {
                 if (!this.audioContext) return;
                 
-                // Resume audio context if suspended
                 if (this.audioContext.state === 'suspended') {
                     this.audioContext.resume();
                 }
                 
-                // Create radar-like beeping sound
-                const oscillator1 = this.audioContext.createOscillator();
-                const oscillator2 = this.audioContext.createOscillator();
+                // Level 3: Far Distance - Faint, slow beeping
+                if (level === 3) {
+                    this.createBeepSequence([700, 1100], 0.12, 1.5, 4);
+                }
+                // Level 2: Medium Range - Medium intensity, moderate beeping  
+                else if (level === 2) {
+                    this.createBeepSequence([900, 1400], 0.25, 0.9, 6);
+                }
+                // Level 1: Close Proximity - Strong, rapid beeping with static
+                else if (level === 1) {
+                    this.createBeepSequence([1100, 1700], 0.4, 0.35, 10);
+                    // Add static noise and interference for very close proximity
+                    setTimeout(() => this.addStaticNoise(), 150);
+                    setTimeout(() => this.addInterference(), 800);
+                }
+            }
+            
+            createBeepSequence(frequencies, volume, interval, count) {
+                for (let i = 0; i < count; i++) {
+                    setTimeout(() => {
+                        const oscillator1 = this.audioContext.createOscillator();
+                        const oscillator2 = this.audioContext.createOscillator();
+                        const gainNode = this.audioContext.createGain();
+                        
+                        oscillator1.connect(gainNode);
+                        oscillator2.connect(gainNode);
+                        gainNode.connect(this.audioContext.destination);
+                        
+                        oscillator1.frequency.setValueAtTime(frequencies[0], this.audioContext.currentTime);
+                        oscillator2.frequency.setValueAtTime(frequencies[1], this.audioContext.currentTime);
+                        oscillator1.type = 'sine';
+                        oscillator2.type = 'sine';
+                        
+                        gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.12);
+                        
+                        oscillator1.start(this.audioContext.currentTime);
+                        oscillator2.start(this.audioContext.currentTime);
+                        oscillator1.stop(this.audioContext.currentTime + 0.12);
+                        oscillator2.stop(this.audioContext.currentTime + 0.12);
+                    }, i * interval * 1000);
+                }
+            }
+            
+            addStaticNoise() {
+                const bufferSize = this.audioContext.sampleRate * 0.4;
+                const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+                const data = buffer.getChannelData(0);
+                
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * 0.15;
+                }
+                
+                const noise = this.audioContext.createBufferSource();
                 const gainNode = this.audioContext.createGain();
                 
-                oscillator1.connect(gainNode);
-                oscillator2.connect(gainNode);
+                noise.buffer = buffer;
+                noise.connect(gainNode);
                 gainNode.connect(this.audioContext.destination);
+                gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.4);
                 
-                // Radar sound characteristics
-                oscillator1.frequency.setValueAtTime(800, this.audioContext.currentTime);
-                oscillator2.frequency.setValueAtTime(1200, this.audioContext.currentTime);
-                oscillator1.type = 'sine';
-                oscillator2.type = 'sine';
-                
-                // Quick beep pattern
-                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.1);
-                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime + 0.2);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.3);
-                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime + 0.4);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.5);
-                
-                oscillator1.start(this.audioContext.currentTime);
-                oscillator2.start(this.audioContext.currentTime);
-                oscillator1.stop(this.audioContext.currentTime + 0.6);
-                oscillator2.stop(this.audioContext.currentTime + 0.6);
+                noise.start(this.audioContext.currentTime);
+                noise.stop(this.audioContext.currentTime + 0.4);
             }
             
-            generateSound(instrument, volume) {
-                if (!this.audioContext) return;
-                
-                // Resume audio context if suspended
-                if (this.audioContext.state === 'suspended') {
-                    this.audioContext.resume();
-                }
-                
+            addInterference() {
+                // Electronic interference sound for close proximity detection
                 const oscillator = this.audioContext.createOscillator();
                 const gainNode = this.audioContext.createGain();
-                
-                // Different frequencies and wave types for each instrument
-                const instrumentSettings = {
-                    violin: { frequency: 440, type: 'sawtooth' },
-                    trumpet: { frequency: 349.23, type: 'square' },
-                    drums: { frequency: 80, type: 'triangle' },
-                    saxophone: { frequency: 293.66, type: 'sawtooth' },
-                    flute: { frequency: 523.25, type: 'sine' },
-                    clarinet: { frequency: 261.63, type: 'square' }
-                };
-                
-                const settings = instrumentSettings[instrument] || instrumentSettings.violin;
                 
                 oscillator.connect(gainNode);
                 gainNode.connect(this.audioContext.destination);
                 
-                oscillator.frequency.setValueAtTime(settings.frequency, this.audioContext.currentTime);
-                oscillator.type = settings.type;
+                oscillator.frequency.setValueAtTime(2000, this.audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(100, this.audioContext.currentTime + 0.3);
+                oscillator.type = 'square';
                 
-                // Set volume based on power level
-                const baseVolume = volume / 10; // Scale down for web audio
-                gainNode.gain.setValueAtTime(baseVolume, this.audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 1.5);
+                gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.3);
                 
                 oscillator.start(this.audioContext.currentTime);
-                oscillator.stop(this.audioContext.currentTime + 1.5);
+                oscillator.stop(this.audioContext.currentTime + 0.3);
+            }
+            
+            generateInstrumentSound(instrument) {
+                if (!this.audioContext) {
+                    console.log('AudioContext not available');
+                    return;
+                }
+                
+                // Ensure AudioContext is ready
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume().then(() => {
+                        this.createInstrumentOscillator(instrument);
+                    }).catch(e => {
+                        console.log('Error resuming AudioContext:', e);
+                    });
+                } else {
+                    this.createInstrumentOscillator(instrument);
+                }
+            }
+            
+            createInstrumentOscillator(instrument) {
+                try {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    
+                    const instrumentSettings = {
+                        violin: { frequency: 440, type: 'sawtooth' },
+                        trumpet: { frequency: 349.23, type: 'square' },
+                        drums: { frequency: 80, type: 'triangle' },
+                        saxophone: { frequency: 293.66, type: 'sawtooth' },
+                        flute: { frequency: 523.25, type: 'sine' },
+                        clarinet: { frequency: 261.63, type: 'square' },
+                        fallback: { frequency: 440, type: 'sine' }
+                    };
+                    
+                    const settings = instrumentSettings[instrument] || instrumentSettings.fallback;
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(settings.frequency, this.audioContext.currentTime);
+                    oscillator.type = settings.type;
+                    
+                    const baseVolume = 0.3;
+                    gainNode.gain.setValueAtTime(baseVolume, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 1.8);
+                    
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + 1.8);
+                    
+                    console.log(`Generated sound for ${instrument}`);
+                } catch (e) {
+                    console.log('Error creating oscillator:', e);
+                }
+            }
+            
+            createFloatingParticles() {
+                for (let i = 0; i < 12; i++) {
+                    setTimeout(() => {
+                        const particle = document.createElement('div');
+                        particle.className = 'particle';
+                        particle.style.width = Math.random() * 8 + 4 + 'px';
+                        particle.style.height = particle.style.width;
+                        particle.style.left = Math.random() * 100 + '%';
+                        particle.style.top = Math.random() * 100 + '%';
+                        particle.style.animationDelay = Math.random() * 6 + 's';
+                        document.body.appendChild(particle);
+                        
+                        setTimeout(() => particle.remove(), 6000);
+                    }, i * 500);
+                }
+                
+                setTimeout(() => this.createFloatingParticles(), 8000);
             }
         }
         
-        // Initialize the app when the page loads
         document.addEventListener('DOMContentLoaded', () => {
             new PossessionSonata();
         });
         
-        // Handle first user interaction for audio context
         document.addEventListener('click', function initAudio() {
             document.removeEventListener('click', initAudio);
         }, { once: true });
