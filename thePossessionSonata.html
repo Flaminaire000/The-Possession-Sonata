@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Possession Sonata</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #1a1a1a;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .app-container {
+            border: 3px solid #666;
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
+            background-color: #2a2a2a;
+        }
+        
+        .title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+        
+        .instruments-section {
+            border: 2px solid #666;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+        
+        .instruments-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .instrument-btn {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 2px solid #333;
+            color: black;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .instrument-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+        }
+        
+        .instrument-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .violin { background-color: #00ff00; }
+        .drums { background-color: #0000ff; color: white; }
+        .clarinet { background-color: #8000ff; color: white; }
+        .flute { background-color: #ff00ff; }
+        .saxophone { background-color: #ffff00; }
+        .trumpet { background-color: #ff8000; }
+        
+        .power-section {
+            border: 2px solid #666;
+            padding: 15px;
+        }
+        
+        .power-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .power-btn {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #666;
+            background-color: #ff6666;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .power-btn:hover {
+            background-color: #ff4444;
+        }
+        
+        .power-btn.active {
+            background-color: #cc0000;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        
+        .power-btn:nth-child(2) {
+            background-color: #dd4444;
+        }
+        
+        .power-btn:nth-child(3) {
+            background-color: #aa0000;
+        }
+        
+        .status {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #ccc;
+            height: 20px;
+        }
+        
+        .playing {
+            color: #00ff00;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="title">THE POSSESSION SONATA</div>
+        
+        <div class="instruments-section">
+            <div class="section-title">instruments</div>
+            <div class="instruments-grid">
+                <button class="instrument-btn violin" data-instrument="violin">VIOLIN</button>
+                <button class="instrument-btn drums" data-instrument="drums">DRUMS</button>
+                <button class="instrument-btn clarinet" data-instrument="clarinet">CLARINETTE</button>
+                <button class="instrument-btn flute" data-instrument="flute">FLUTE</button>
+                <button class="instrument-btn saxophone" data-instrument="saxophone">SAXOPHONE</button>
+                <button class="instrument-btn trumpet" data-instrument="trumpet">TRUMPET</button>
+            </div>
+        </div>
+        
+        <div class="power-section">
+            <div class="section-title">Power level</div>
+            <div class="power-controls">
+                <button class="power-btn active" data-level="1">1</button>
+                <button class="power-btn" data-level="2">2</button>
+                <button class="power-btn" data-level="3">3</button>
+            </div>
+        </div>
+        
+        <div class="status" id="status">Ready - Volume Level: 1 (Low)</div>
+    </div>
+
+    <script>
+        class PossessionSonata {
+            constructor() {
+                this.currentVolume = 1;
+                this.audioContext = null;
+                this.audioFiles = {};
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.initAudioContext();
+                this.loadAudioFiles();
+            }
+            
+            initAudioContext() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Web Audio API not supported');
+                }
+            }
+            
+            loadAudioFiles() {
+                // Load all instrument MP3 files from multiple possible locations
+                const instruments = ['SAXOPHONE', 'VIOLIN', 'TRUMPET', 'DRUMS', 'FLUTE', 'CLARINETTE'];
+                
+                instruments.forEach(instrument => {
+                    this.audioFiles[instrument.toLowerCase()] = new Audio();
+                    
+                    // Multiple location paths for each instrument
+                    const possiblePaths = [
+                        `./sounds/${instrument}.mp3`, // Local sounds folder
+                        `C:\\Users\\Lili\\Downloads\\${instrument}.mp3`, // Windows user downloads
+                        
+                        
+                        `/storage/emulated/0/Download/${instrument}.mp3`, // Android downloads
+                        `file:///android_asset/sounds/${instrument}.mp3`, // Android assets
+                        `./assets/${instrument}.mp3`, // Web assets folder
+                        `./${instrument}.mp3`, // Same directory
+                        `../Downloads/${instrument}.mp3`, // Parent Downloads
+                        `/home/user/Downloads/${instrument}.mp3`, // Linux downloads
+                        `/Users/user/Downloads/${instrument}.mp3` // macOS downloads
+                    ];
+                    
+                    // Try first path
+                    this.audioFiles[instrument.toLowerCase()].src = possiblePaths[0];
+                    this.audioFiles[instrument.toLowerCase()].preload = 'auto';
+                    
+                    // Set fixed volume to medium-high (0.75)
+                    this.audioFiles[instrument.toLowerCase()].volume = 0.75;
+                    
+                    this.audioFiles[instrument.toLowerCase()].onerror = () => {
+                        console.log(`Could not load ${instrument}.mp3 from any location - using synthesized sound instead`);
+                        // Try next path if available (simplified for demo)
+                    };
+                });
+            }
+            
+            setupEventListeners() {
+                // Power level buttons
+                document.querySelectorAll('.power-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.setPowerLevel(parseInt(e.target.dataset.level));
+                    });
+                });
+                
+                // Instrument buttons
+                document.querySelectorAll('.instrument-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.playInstrument(e.target.dataset.instrument);
+                    });
+                });
+            }
+            
+            setPowerLevel(level) {
+                this.currentVolume = level;
+                
+                // Play radar detection sound when power level is pressed
+                this.playRadarSound();
+                
+                // Update UI
+                document.querySelectorAll('.power-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-level="${level}"]`).classList.add('active');
+                
+                // Update status
+                const volumeText = level === 1 ? 'Low' : level === 2 ? 'Medium' : 'High';
+                document.getElementById('status').textContent = `Power Level Set: ${level} (${volumeText}) - Radar Active`;
+                
+                // Reset status after radar sound
+                setTimeout(() => {
+                    document.getElementById('status').textContent = `Ready - Power Level: ${level} (${volumeText})`;
+                }, 1500);
+            }
+            
+            playInstrument(instrument) {
+                const volumeText = this.currentVolume === 1 ? 'Low' : this.currentVolume === 2 ? 'Medium' : 'High';
+                const status = document.getElementById('status');
+                
+                status.textContent = `Playing ${instrument.toUpperCase()} - Fixed Medium-High Volume`;
+                status.classList.add('playing');
+                
+                // Play sound based on instrument (now all instruments can use MP3 files)
+                const instrumentKey = instrument === 'clarinet' ? 'clarinette' : instrument;
+                if (this.audioFiles[instrumentKey] && !this.audioFiles[instrumentKey].error) {
+                    this.playAudioFile(this.audioFiles[instrumentKey]);
+                } else {
+                    this.generateSound(instrument, 2); // Fixed at medium level for fallback
+                }
+                
+                // Reset status after 2 seconds
+                setTimeout(() => {
+                    status.textContent = `Ready - Power Level: ${this.currentVolume} (${volumeText})`;
+                    status.classList.remove('playing');
+                }, 2000);
+            }
+            
+            playAudioFile(audioElement) {
+                // Stop any currently playing instance
+                audioElement.pause();
+                audioElement.currentTime = 0;
+                
+                // Volume is already set to medium-high (0.75) during loading
+                
+                // Play the audio
+                audioElement.play().catch(e => {
+                    console.log('Error playing audio file:', e);
+                    // Fallback to synthesized sound at medium level
+                    this.generateSound('saxophone', 2);
+                });
+            }
+            
+            playRadarSound() {
+                if (!this.audioContext) return;
+                
+                // Resume audio context if suspended
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+                
+                // Create radar-like beeping sound
+                const oscillator1 = this.audioContext.createOscillator();
+                const oscillator2 = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator1.connect(gainNode);
+                oscillator2.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                // Radar sound characteristics
+                oscillator1.frequency.setValueAtTime(800, this.audioContext.currentTime);
+                oscillator2.frequency.setValueAtTime(1200, this.audioContext.currentTime);
+                oscillator1.type = 'sine';
+                oscillator2.type = 'sine';
+                
+                // Quick beep pattern
+                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime + 0.2);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime + 0.4);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.5);
+                
+                oscillator1.start(this.audioContext.currentTime);
+                oscillator2.start(this.audioContext.currentTime);
+                oscillator1.stop(this.audioContext.currentTime + 0.6);
+                oscillator2.stop(this.audioContext.currentTime + 0.6);
+            }
+            
+            generateSound(instrument, volume) {
+                if (!this.audioContext) return;
+                
+                // Resume audio context if suspended
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+                
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                // Different frequencies and wave types for each instrument
+                const instrumentSettings = {
+                    violin: { frequency: 440, type: 'sawtooth' },
+                    trumpet: { frequency: 349.23, type: 'square' },
+                    drums: { frequency: 80, type: 'triangle' },
+                    saxophone: { frequency: 293.66, type: 'sawtooth' },
+                    flute: { frequency: 523.25, type: 'sine' },
+                    clarinet: { frequency: 261.63, type: 'square' }
+                };
+                
+                const settings = instrumentSettings[instrument] || instrumentSettings.violin;
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(settings.frequency, this.audioContext.currentTime);
+                oscillator.type = settings.type;
+                
+                // Set volume based on power level
+                const baseVolume = volume / 10; // Scale down for web audio
+                gainNode.gain.setValueAtTime(baseVolume, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 1.5);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + 1.5);
+            }
+        }
+        
+        // Initialize the app when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new PossessionSonata();
+        });
+        
+        // Handle first user interaction for audio context
+        document.addEventListener('click', function initAudio() {
+            document.removeEventListener('click', initAudio);
+        }, { once: true });
+    </script>
+</body>
+</html>
