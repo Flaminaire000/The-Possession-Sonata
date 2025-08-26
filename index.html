@@ -146,6 +146,17 @@
             transform: scale(0.98);
         }
         
+        .instrument-btn.playing {
+            animation: instrumentPulse 1s ease-in-out infinite;
+            box-shadow: 0 0 30px rgba(144, 238, 144, 0.7);
+            border-color: #90EE90;
+        }
+        
+        @keyframes instrumentPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
         .instrument-icon {
             font-size: 60px;
             margin-bottom: 8px;
@@ -242,9 +253,24 @@
                 opacity: 0.1;
             }
         }
+        
+        .audio-debug {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #90EE90;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 10px;
+            z-index: 1000;
+            display: none;
+        }
     </style>
 </head>
 <body>
+    <div class="audio-debug" id="audioDebug">Audio: Initializing...</div>
+    
     <div class="app-container">
         <div class="title">THE POSSESSION SONATA</div>
         
@@ -296,21 +322,52 @@
                 this.currentDetectionLevel = 1;
                 this.audioContext = null;
                 this.audioFiles = {};
+                this.isPlaying = false;
+                this.debugMode = false;
+                this.activeOscillators = [];
+                
                 this.init();
                 this.createFloatingParticles();
+                
+                // Global reference for debugging
+                window.possessionApp = this;
             }
             
             init() {
                 this.setupEventListeners();
-                this.initAudioContext();
+                this.initializeAudio();
                 this.loadAudioFiles();
+                this.enableDebugMode();
             }
             
-            initAudioContext() {
+            enableDebugMode() {
+                // Show debug panel if there are audio issues
+                const debugPanel = document.getElementById('audioDebug');
+                if (this.debugMode) {
+                    debugPanel.style.display = 'block';
+                    this.updateDebug('Debug mode enabled');
+                }
+            }
+            
+            updateDebug(message) {
+                if (this.debugMode) {
+                    document.getElementById('audioDebug').textContent = `Audio: ${message}`;
+                }
+            }
+            
+            initializeAudio() {
                 try {
                     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    this.updateDebug(`AudioContext created - State: ${this.audioContext.state}`);
+                    
+                    // Handle state changes
+                    this.audioContext.addEventListener('statechange', () => {
+                        this.updateDebug(`State changed to: ${this.audioContext.state}`);
+                    });
+                    
                 } catch (e) {
-                    console.log('Web Audio API not supported');
+                    this.updateDebug('AudioContext creation failed');
+                    console.log('Web Audio API not supported:', e);
                 }
             }
             
@@ -318,164 +375,295 @@
                 const instruments = ['SAXOPHONE', 'VIOLIN', 'TRUMPET', 'DRUMS', 'FLUTE', 'CLARINETTE'];
                 
                 instruments.forEach(instrument => {
-                    this.audioFiles[instrument.toLowerCase()] = new Audio();
+                    const audio = new Audio();
+                    const instrumentKey = instrument.toLowerCase().replace('clarinette', 'clarinet');
                     
-                    const possiblePaths = [
+                    // Try multiple possible paths
+                    const paths = [
+                        `C:\\Users\\Lili\\Desktop\\sounds\\${instrument}.mp3`,
                         `./sounds/${instrument}.mp3`,
-                        `C:\\Users\\Lili\\Downloads\\${instrument}.mp3`,
-                        `/storage/emulated/0/Download/${instrument}.mp3`,
-                        `file:///android_asset/sounds/${instrument}.mp3`,
                         `./assets/${instrument}.mp3`,
-                        `./${instrument}.mp3`,
-                        `../Downloads/${instrument}.mp3`,
-                        `/home/user/Downloads/${instrument}.mp3`,
-                        `/Users/user/Downloads/${instrument}.mp3`
+                        `./${instrument}.mp3`
                     ];
                     
-                    this.audioFiles[instrument.toLowerCase()].src = possiblePaths[0];
-                    this.audioFiles[instrument.toLowerCase()].preload = 'auto';
-                    this.audioFiles[instrument.toLowerCase()].volume = 0.75;
+                    audio.src = paths[0];
+                    audio.preload = 'auto';
+                    audio.volume = 0.7;
+                    audio.crossOrigin = 'anonymous';
                     
-                    this.audioFiles[instrument.toLowerCase()].onerror = () => {
-                        console.log(`Could not load ${instrument}.mp3 from any location - using synthesized sound instead`);
-                    };
+                    audio.addEventListener('canplaythrough', () => {
+                        this.updateDebug(`${instrument} loaded successfully`);
+                    });
+                    
+                    audio.addEventListener('error', (e) => {
+                        this.updateDebug(`${instrument} load failed - will use synth`);
+                    });
+                    
+                    this.audioFiles[instrumentKey] = audio;
                 });
             }
             
             setupEventListeners() {
+                // Power buttons
                 document.querySelectorAll('.power-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         this.setDetectionLevel(parseInt(e.target.dataset.level));
                     });
                 });
                 
+                // Instrument buttons
                 document.querySelectorAll('.instrument-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
-                        this.playInstrument(e.target.dataset.instrument);
+                        const instrument = e.currentTarget.dataset.instrument;
+                        this.playInstrument(instrument, e.currentTarget);
                     });
                 });
+                
+                // Audio context initialization on user interaction
+                document.addEventListener('click', this.initAudioOnInteraction.bind(this), { once: true });
+                document.addEventListener('touchstart', this.initAudioOnInteraction.bind(this), { once: true });
+            }
+            
+            initAudioOnInteraction() {
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    this.audioContext.resume().then(() => {
+                        this.updateDebug('AudioContext resumed after user interaction');
+                    });
+                }
+            }
+            
+            async ensureAudioContext() {
+                if (!this.audioContext) {
+                    this.initializeAudio();
+                }
+                
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    try {
+                        await this.audioContext.resume();
+                        this.updateDebug('AudioContext resumed');
+                    } catch (e) {
+                        this.updateDebug('Failed to resume AudioContext');
+                        throw e;
+                    }
+                }
+                
+                return this.audioContext && this.audioContext.state === 'running';
             }
             
             setDetectionLevel(level) {
                 this.currentDetectionLevel = level;
-                
                 this.playSpectrometerSound(level);
                 
+                // Update UI
                 document.querySelectorAll('.power-btn').forEach(btn => {
                     btn.classList.remove('active');
                 });
                 document.querySelector(`[data-level="${level}"]`).classList.add('active');
                 
+                // Update status
                 const detectionText = level === 3 ? 'Far Distance' : level === 2 ? 'Medium Range' : 'Close Proximity';
                 const intensity = level === 3 ? 'Faint' : level === 2 ? 'Moderate' : 'Strong';
-                document.getElementById('status').textContent = `Spectral Detection: ${detectionText} - ${intensity} Signal`;
+                const status = document.getElementById('status');
+                
+                status.textContent = `Spectral Detection: ${detectionText} - ${intensity} Signal`;
                 
                 setTimeout(() => {
-                    document.getElementById('status').textContent = `Spectrometer Active - Detection Level: ${level}`;
+                    status.textContent = `Spectrometer Active - Detection Level: ${level}`;
                 }, 2500);
             }
             
-            playInstrument(instrument) {
+            async playInstrument(instrument, buttonElement) {
+                if (this.isPlaying) return;
+                
+                this.isPlaying = true;
                 const status = document.getElementById('status');
                 
+                // Visual feedback
                 status.textContent = `Summoning ${instrument.toUpperCase()} Spirit - Manifestation Active`;
                 status.classList.add('playing');
+                buttonElement.classList.add('playing');
                 
-                // Ensure AudioContext is ready
-                if (this.audioContext && this.audioContext.state === 'suspended') {
-                    this.audioContext.resume().then(() => {
-                        this.executeInstrumentSound(instrument);
-                    });
-                } else {
-                    this.executeInstrumentSound(instrument);
+                this.updateDebug(`Playing ${instrument}`);
+                
+                try {
+                    // Ensure audio context is ready
+                    const audioReady = await this.ensureAudioContext();
+                    
+                    if (audioReady) {
+                        // Try to play audio file first, then fallback to synthesized sound
+                        const played = await this.tryPlayAudioFile(instrument);
+                        if (!played) {
+                            this.generateSynthSound(instrument);
+                        }
+                    } else {
+                        this.updateDebug('AudioContext not ready, showing visual feedback only');
+                    }
+                } catch (e) {
+                    this.updateDebug('Audio playback failed');
+                    console.log('Audio playback error:', e);
                 }
                 
+                // Reset UI after 2.5 seconds
                 setTimeout(() => {
                     status.textContent = `Spectrometer Active - Detection Level: ${this.currentDetectionLevel}`;
                     status.classList.remove('playing');
+                    buttonElement.classList.remove('playing');
+                    this.isPlaying = false;
                 }, 2500);
             }
             
-            executeInstrumentSound(instrument) {
-                const instrumentKey = instrument === 'clarinet' ? 'clarinette' : instrument;
-                if (this.audioFiles[instrumentKey] && !this.audioFiles[instrumentKey].error) {
-                    this.playAudioFile(this.audioFiles[instrumentKey]);
-                } else {
-                    this.generateInstrumentSound(instrument);
+            async tryPlayAudioFile(instrument) {
+                const audio = this.audioFiles[instrument];
+                
+                if (!audio || audio.error || audio.readyState < 2) {
+                    return false;
+                }
+                
+                try {
+                    audio.currentTime = 0;
+                    audio.volume = 0.7;
+                    
+                    const playPromise = audio.play();
+                    
+                    if (playPromise) {
+                        await playPromise;
+                        this.updateDebug(`${instrument} audio file played`);
+                        return true;
+                    }
+                } catch (e) {
+                    this.updateDebug(`${instrument} audio file failed`);
+                    return false;
+                }
+                
+                return false;
+            }
+            
+            generateSynthSound(instrument) {
+                if (!this.audioContext || this.audioContext.state !== 'running') {
+                    this.updateDebug('Cannot generate synth sound - AudioContext not ready');
+                    return;
+                }
+                
+                try {
+                    this.createInstrumentSynth(instrument);
+                    this.updateDebug(`${instrument} synth sound generated`);
+                } catch (e) {
+                    this.updateDebug('Synth sound generation failed');
+                    console.log('Synth generation error:', e);
                 }
             }
             
-            playAudioFile(audioElement) {
-                // Stop any currently playing audio
-                audioElement.pause();
-                audioElement.currentTime = 0;
-                audioElement.playbackRate = 1.0; // Always normal speed for instruments
+            createInstrumentSynth(instrument) {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                const filter = this.audioContext.createBiquadFilter();
                 
-                // Ensure audio is ready to play
-                const playPromise = audioElement.play();
+                // Instrument-specific settings
+                const settings = {
+                    violin: { freq: 440, type: 'sawtooth', filterFreq: 3000, q: 5 },
+                    trumpet: { freq: 349, type: 'square', filterFreq: 2000, q: 3 },
+                    drums: { freq: 80, type: 'triangle', filterFreq: 200, q: 1 },
+                    saxophone: { freq: 294, type: 'sawtooth', filterFreq: 1500, q: 4 },
+                    flute: { freq: 523, type: 'sine', filterFreq: 4000, q: 2 },
+                    clarinet: { freq: 262, type: 'square', filterFreq: 1200, q: 6 }
+                };
                 
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        console.log('Audio playing successfully');
-                    }).catch(e => {
-                        console.log('Error playing audio file:', e);
-                        this.generateInstrumentSound('fallback');
-                    });
-                }
+                const config = settings[instrument] || settings.violin;
+                
+                // Audio chain: oscillator -> filter -> gain -> destination
+                oscillator.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                // Configure oscillator
+                oscillator.frequency.setValueAtTime(config.freq, this.audioContext.currentTime);
+                oscillator.type = config.type;
+                
+                // Configure filter
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(config.filterFreq, this.audioContext.currentTime);
+                filter.Q.setValueAtTime(config.q, this.audioContext.currentTime);
+                
+                // ADSR Envelope
+                const now = this.audioContext.currentTime;
+                const attack = 0.1;
+                const decay = 0.3;
+                const sustain = 0.6;
+                const release = 1.2;
+                const volume = 0.4;
+                
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(volume, now + attack);
+                gainNode.gain.exponentialRampToValueAtTime(volume * sustain, now + attack + decay);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + attack + decay + release);
+                
+                const duration = attack + decay + release;
+                
+                oscillator.start(now);
+                oscillator.stop(now + duration);
+                
+                // Clean up reference
+                this.activeOscillators.push(oscillator);
+                oscillator.onended = () => {
+                    const index = this.activeOscillators.indexOf(oscillator);
+                    if (index > -1) {
+                        this.activeOscillators.splice(index, 1);
+                    }
+                };
             }
             
-            playSpectrometerSound(level) {
-                if (!this.audioContext) return;
-                
-                if (this.audioContext.state === 'suspended') {
-                    this.audioContext.resume();
-                }
-                
-                // Level 3: Far Distance - Faint, slow beeping
-                if (level === 3) {
-                    this.createBeepSequence([700, 1100], 0.12, 1.5, 4);
-                }
-                // Level 2: Medium Range - Medium intensity, moderate beeping  
-                else if (level === 2) {
-                    this.createBeepSequence([900, 1400], 0.25, 0.9, 6);
-                }
-                // Level 1: Close Proximity - Strong, rapid beeping with static
-                else if (level === 1) {
-                    this.createBeepSequence([1100, 1700], 0.4, 0.35, 10);
-                    // Add static noise and interference for very close proximity
-                    setTimeout(() => this.addStaticNoise(), 150);
-                    setTimeout(() => this.addInterference(), 800);
+            async playSpectrometerSound(level) {
+                try {
+                    const audioReady = await this.ensureAudioContext();
+                    if (!audioReady) return;
+                    
+                    // Different beep patterns based on detection level
+                    if (level === 3) {
+                        this.createBeepSequence([700, 1100], 0.12, 1.5, 4);
+                    } else if (level === 2) {
+                        this.createBeepSequence([900, 1400], 0.25, 0.9, 6);
+                    } else if (level === 1) {
+                        this.createBeepSequence([1100, 1700], 0.4, 0.35, 10);
+                        setTimeout(() => this.addStaticNoise(), 150);
+                        setTimeout(() => this.addInterference(), 800);
+                    }
+                } catch (e) {
+                    this.updateDebug('Spectrometer sound failed');
                 }
             }
             
             createBeepSequence(frequencies, volume, interval, count) {
                 for (let i = 0; i < count; i++) {
                     setTimeout(() => {
-                        const oscillator1 = this.audioContext.createOscillator();
-                        const oscillator2 = this.audioContext.createOscillator();
-                        const gainNode = this.audioContext.createGain();
+                        if (!this.audioContext || this.audioContext.state !== 'running') return;
                         
-                        oscillator1.connect(gainNode);
-                        oscillator2.connect(gainNode);
-                        gainNode.connect(this.audioContext.destination);
+                        const osc1 = this.audioContext.createOscillator();
+                        const osc2 = this.audioContext.createOscillator();
+                        const gain = this.audioContext.createGain();
                         
-                        oscillator1.frequency.setValueAtTime(frequencies[0], this.audioContext.currentTime);
-                        oscillator2.frequency.setValueAtTime(frequencies[1], this.audioContext.currentTime);
-                        oscillator1.type = 'sine';
-                        oscillator2.type = 'sine';
+                        osc1.connect(gain);
+                        osc2.connect(gain);
+                        gain.connect(this.audioContext.destination);
                         
-                        gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
-                        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.12);
+                        osc1.frequency.value = frequencies[0];
+                        osc2.frequency.value = frequencies[1];
+                        osc1.type = osc2.type = 'sine';
                         
-                        oscillator1.start(this.audioContext.currentTime);
-                        oscillator2.start(this.audioContext.currentTime);
-                        oscillator1.stop(this.audioContext.currentTime + 0.12);
-                        oscillator2.stop(this.audioContext.currentTime + 0.12);
+                        const now = this.audioContext.currentTime;
+                        gain.gain.setValueAtTime(volume, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                        
+                        osc1.start(now);
+                        osc2.start(now);
+                        osc1.stop(now + 0.12);
+                        osc2.stop(now + 0.12);
                     }, i * interval * 1000);
                 }
             }
             
             addStaticNoise() {
+                if (!this.audioContext || this.audioContext.state !== 'running') return;
+                
                 const bufferSize = this.audioContext.sampleRate * 0.4;
                 const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
                 const data = buffer.getChannelData(0);
@@ -485,89 +673,39 @@
                 }
                 
                 const noise = this.audioContext.createBufferSource();
-                const gainNode = this.audioContext.createGain();
+                const gain = this.audioContext.createGain();
                 
                 noise.buffer = buffer;
-                noise.connect(gainNode);
-                gainNode.connect(this.audioContext.destination);
-                gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.4);
+                noise.connect(gain);
+                gain.connect(this.audioContext.destination);
                 
-                noise.start(this.audioContext.currentTime);
-                noise.stop(this.audioContext.currentTime + 0.4);
+                const now = this.audioContext.currentTime;
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                
+                noise.start(now);
+                noise.stop(now + 0.4);
             }
             
             addInterference() {
-                // Electronic interference sound for close proximity detection
-                const oscillator = this.audioContext.createOscillator();
-                const gainNode = this.audioContext.createGain();
+                if (!this.audioContext || this.audioContext.state !== 'running') return;
                 
-                oscillator.connect(gainNode);
-                gainNode.connect(this.audioContext.destination);
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
                 
-                oscillator.frequency.setValueAtTime(2000, this.audioContext.currentTime);
-                oscillator.frequency.exponentialRampToValueAtTime(100, this.audioContext.currentTime + 0.3);
-                oscillator.type = 'square';
+                osc.connect(gain);
+                gain.connect(this.audioContext.destination);
                 
-                gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.3);
+                const now = this.audioContext.currentTime;
+                osc.frequency.setValueAtTime(2000, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+                osc.type = 'square';
                 
-                oscillator.start(this.audioContext.currentTime);
-                oscillator.stop(this.audioContext.currentTime + 0.3);
-            }
-            
-            generateInstrumentSound(instrument) {
-                if (!this.audioContext) {
-                    console.log('AudioContext not available');
-                    return;
-                }
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
                 
-                // Ensure AudioContext is ready
-                if (this.audioContext.state === 'suspended') {
-                    this.audioContext.resume().then(() => {
-                        this.createInstrumentOscillator(instrument);
-                    }).catch(e => {
-                        console.log('Error resuming AudioContext:', e);
-                    });
-                } else {
-                    this.createInstrumentOscillator(instrument);
-                }
-            }
-            
-            createInstrumentOscillator(instrument) {
-                try {
-                    const oscillator = this.audioContext.createOscillator();
-                    const gainNode = this.audioContext.createGain();
-                    
-                    const instrumentSettings = {
-                        violin: { frequency: 440, type: 'sawtooth' },
-                        trumpet: { frequency: 349.23, type: 'square' },
-                        drums: { frequency: 80, type: 'triangle' },
-                        saxophone: { frequency: 293.66, type: 'sawtooth' },
-                        flute: { frequency: 523.25, type: 'sine' },
-                        clarinet: { frequency: 261.63, type: 'square' },
-                        fallback: { frequency: 440, type: 'sine' }
-                    };
-                    
-                    const settings = instrumentSettings[instrument] || instrumentSettings.fallback;
-                    
-                    oscillator.connect(gainNode);
-                    gainNode.connect(this.audioContext.destination);
-                    
-                    oscillator.frequency.setValueAtTime(settings.frequency, this.audioContext.currentTime);
-                    oscillator.type = settings.type;
-                    
-                    const baseVolume = 0.3;
-                    gainNode.gain.setValueAtTime(baseVolume, this.audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 1.8);
-                    
-                    oscillator.start(this.audioContext.currentTime);
-                    oscillator.stop(this.audioContext.currentTime + 1.8);
-                    
-                    console.log(`Generated sound for ${instrument}`);
-                } catch (e) {
-                    console.log('Error creating oscillator:', e);
-                }
+                osc.start(now);
+                osc.stop(now + 0.3);
             }
             
             createFloatingParticles() {
@@ -588,15 +726,52 @@
                 
                 setTimeout(() => this.createFloatingParticles(), 8000);
             }
+            
+            // Debug methods
+            enableDebug() {
+                this.debugMode = true;
+                document.getElementById('audioDebug').style.display = 'block';
+                this.updateDebug('Debug mode enabled manually');
+            }
+            
+            disableDebug() {
+                this.debugMode = false;
+                document.getElementById('audioDebug').style.display = 'none';
+            }
+            
+            testAllInstruments() {
+                const instruments = ['violin', 'drums', 'clarinet', 'flute', 'saxophone', 'trumpet'];
+                instruments.forEach((instrument, index) => {
+                    setTimeout(() => {
+                        const button = document.querySelector(`[data-instrument="${instrument}"]`);
+                        if (button) {
+                            this.playInstrument(instrument, button);
+                        }
+                    }, index * 3000);
+                });
+            }
         }
         
+        // Initialize the application
         document.addEventListener('DOMContentLoaded', () => {
             new PossessionSonata();
         });
         
-        document.addEventListener('click', function initAudio() {
-            document.removeEventListener('click', initAudio);
-        }, { once: true });
+        // Additional audio context activation for different browsers
+        ['click', 'touchstart', 'keydown'].forEach(event => {
+            document.addEventListener(event, function activateAudio() {
+                if (window.possessionApp && window.possessionApp.audioContext) {
+                    if (window.possessionApp.audioContext.state === 'suspended') {
+                        window.possessionApp.audioContext.resume();
+                    }
+                }
+            }, { once: true });
+        });
+        
+        // Global functions for debugging (accessible from console)
+        window.enableAudioDebug = () => window.possessionApp?.enableDebug();
+        window.disableAudioDebug = () => window.possessionApp?.disableDebug();
+        window.testAllInstruments = () => window.possessionApp?.testAllInstruments();
     </script>
 </body>
 </html>
